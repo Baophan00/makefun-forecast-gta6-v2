@@ -1,12 +1,9 @@
-"""make.fun gta6-twitch-ccu-forecast-01 entry (Python 3, standard library only).
+"""make.fun GTA VI Twitch-viewers forecast, standard library only.
 
-One hour into GTA VI's release day the case gives hour 1's print p. For every
-comparable launch we take the 24 hourly points of its own release day, reduce
-each hour 2..24 to a log ratio against that comparable's hour 1, clip the ratio
-to a sane band, pool those log ratios across comparables per hour, read the five
-score quantiles off each pool, exponentiate and scale by p. With fewer than five
-usable comparables we blend in a midday-peak log-ratio prior so the tails stay
-honest. Everything is deterministic and bounded; no network, no clock, no RNG.
+The comparables model reduces each past launch's own release day to hour-over-
+hour log ratios, pools those ratios across launches, reads five quantiles from
+each hour's pool, and scales by the case's hour-1 print. Thin samples blend with
+a midday-peak prior. Deterministic, bounded, no network or clock.
 """
 
 import json
@@ -216,7 +213,9 @@ def write_owner():
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     write_owner()
-    for path in sorted(INPUT_DIR.glob("*.in")):
+    filenames = sorted(p.name for p in INPUT_DIR.glob("*.in"))
+    for filename in filenames:
+        path = INPUT_DIR / filename
         case = json.loads(path.read_text(encoding="utf-8"))
         result = forecast_case(case)
         (OUTPUT_DIR / (path.stem + ".out")).write_text(
